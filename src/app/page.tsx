@@ -1,101 +1,143 @@
-import Image from "next/image";
+'use client'
+
+import { ConnectButton, SocialProfile } from "thirdweb/react";
+import { client } from "./client";
+import { useEffect, useState } from "react";
+import { getSocialProfiles } from "thirdweb/social";
+import { shortenAddress } from "thirdweb/utils";
+import { CardSkeleton } from "./components/CardSkeleton";
+import { ENSCard } from "./components/ENSCard";
+import { FarcasterCard } from "./components/FarcasterCard";
+import { LensCard } from "./components/LensCard";
+
+type FilterType = "all" | "ens" | "farcaster" | "lens";
+
+const isValidEthereumAddress = (address: string) => {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+};
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [searchInput, setSearchInput] = useState("");
+  const [searchAddress, setSearchAddress] = useState("");
+  const [userProfiles, setUserProfiles] = useState<SocialProfile[]>([]);
+  const [activeFilter, setActivefilter] = useState<FilterType>("all");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isValidAddress, setIsValidAddress] = useState(false);
+  // const [filteredProfiles, setFilteredProfiles] = useState<SocialProfile[]>([]);
+
+  useEffect(() => {
+    setIsValidAddress(isValidEthereumAddress(searchInput))
+  }, [searchInput])
+
+  const handleSearch = async () => {
+    if (!isValidAddress) return;
+
+    setIsLoading(true);
+    setSearchAddress(searchInput);
+    try {
+      const profiles = await getSocialProfiles({
+        client: client,
+        address: searchInput
+      })
+      setUserProfiles(profiles);
+      // console.log(profiles)
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+      setSearchInput('');
+    }
+  }
+
+  const filteredProfiles = userProfiles.filter(profile => 
+    activeFilter === "all" || profile.type === activeFilter
+  );
+
+  return (
+    <main className="min-h-screen bg-base-200 flex flex-col items-center p-4">
+      {/* <div>
+        <ConnectButton client={client}/>
+      </div> */}
+      <div className="text-center mb-8">
+        <h1 className="text-5xl font-bold mb-8 text-primary">
+          iFindr
+        </h1>
+
+        <div className="flex flex-row items-center justify-center mb-4">
+          <input 
+          type="text" 
+          placeholder="Enter Wallet Address" 
+          value={searchInput} 
+          onChange={(e) => setSearchInput(e.target.value)} 
+          className={`bg-zinc-800 text-neutral-200 border border-zinc-700  rounded-md px-[10px] py-[5px] w-full max-w-xs mr-2 ${!isValidAddress && searchInput ? 'input-error' : ''}`}
+          disabled={isLoading} />
+
+          <button 
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 cursor-pointer"
+            onClick={ () => {
+              handleSearch();
+            }}
+            disabled={isLoading || !isValidAddress}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {isLoading? "Searching" : "Search"}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {searchInput && !isValidAddress && (
+          <p className="text-red-500 text-sm text-left mt-1">Please Input a Valid Ethereum Address</p>
+        )}
+
+
+        {hasSearched && (
+          <div className="mt-8">
+            <p className="text-sm text-gray-500 mb-4">
+              Search results for: <span className="font-medium">{shortenAddress(searchAddress)}</span>
+            </p>
+
+            <div className="flex justify-center space-x-2 bg-gray-200 rounded-lg p-1">
+              {["all", "ens", "farcaster", "lens"].map((filter) => (
+                <button
+                  key={filter}
+
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    activeFilter === filter
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 hover:bg-base-100"
+                  }`}
+                  onClick={() => setActivefilter(filter as FilterType)}
+                >
+                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 w-full">
+        {isLoading ? (
+          Array(3).fill(0).map((_, index) => (
+            <div key={index} className="w-full h-full animate-pulse">
+              <CardSkeleton />
+            </div>
+          ))
+        ) : hasSearched && filteredProfiles.length > 0 ? (
+          filteredProfiles.map((profile, index) => (
+            <div key={index} className="w-full h-full transition-all duration-300 hover:shadow-lg hover:scale-105">
+              {profile.type === "ens" && <ENSCard profile={profile} />}
+              {profile.type === "farcaster" && <FarcasterCard profile={profile} />}
+              {profile.type === "lens" && <LensCard profile={profile} />}
+            </div>
+          ))
+        ) : hasSearched ? (
+          <p className="text-center text-gray-500 col-span-full text-lg font-medium py-8">No profiles found for this address.</p>
+        ) : null} 
+      </div>
+
+    </main>
   );
 }
