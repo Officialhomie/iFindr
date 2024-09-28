@@ -1,6 +1,6 @@
 'use client'
 
-import { ConnectButton, SocialProfile } from "thirdweb/react";
+import { SocialProfile } from "thirdweb/react";
 import { client } from "./client";
 import { useEffect, useState } from "react";
 import { getSocialProfiles } from "thirdweb/social";
@@ -26,7 +26,6 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isValidAddress, setIsValidAddress] = useState(false);
-  // const [filteredProfiles, setFilteredProfiles] = useState<SocialProfile[]>([]);
 
   useEffect(() => {
     setIsValidAddress(isValidEthereumAddress(searchInput))
@@ -59,9 +58,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-base-200 flex flex-col items-center p-4">
-      {/* <div>
-        <ConnectButton client={client}/>
-      </div> */}
       <div className="text-center mb-8">
         <h1 className="text-5xl font-bold mb-8 text-primary">
           iFindr
